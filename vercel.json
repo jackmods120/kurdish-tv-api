@@ -1,5 +1,7 @@
 {
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/kurdish-tv" }],
+  "rewrites": [
+    { "source": "/api/kurdish-tv", "destination": "/api/kurdish-tv.js" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
