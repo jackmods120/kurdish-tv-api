@@ -1,12 +1,16 @@
 {
   "name": "kurdish-tv-api",
-  "version": "1.0.0",
-  "description": "API بۆ وەرگرتنی لینکی پەخشی ڕاستەوخۆی کەناڵە کوردییەکان",
-  "main": "api/kurdish-tv.js",
+  "version": "2.0.0",
+  "description": "API بۆ هەموو کەناڵە کوردی و عێراقییەکان — Kurdish & Iraqi TV Channels API",
+  "keywords": ["kurdish", "tv", "iptv", "iraq", "api", "m3u"],
+  "main": "api/channels.js",
   "scripts": {
-    "start": "node api/kurdish-tv.js"
+    "start": "node api/channels.js"
   },
   "dependencies": {
-    "axios": "^1.6.0"
+    "axios": "^1.7.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

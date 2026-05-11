@@ -1,14 +1,22 @@
 {
+  "version": 2,
   "rewrites": [
-    { "source": "/api/kurdish-tv", "destination": "/api/kurdish-tv.js" }
+    { "source": "/",  "destination": "/index.html" }
   ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Origin",  "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
+        { "key": "Cache-Control",                "value": "s-maxage=900, stale-while-revalidate=1800" }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
     }
   ]

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kurdish TV API — کەناڵە کوردی و عێراقییەکان</title>
+  <meta name="description" content="API بۆ هەموو کەناڵە کوردی و عێراقییەکان — Free Kurdish & Iraqi TV Channels API" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ───────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0a;
+      --surface:   #111111;
+      --surface2:  #1a1a1a;
+      --border:    rgba(255,255,255,.08);
+      --text:      #f5f5f7;
+      --muted:     #8e8e93;
+      --ku:        #e8c84a;   /* Kurdish sun gold */
+      --ku2:       #d93025;   /* Kurdish red */
+      --ku3:       #2d8a4e;   /* Kurdish green */
+      --accent:    #a78bfa;   /* purple glow */
+      --accent2:   #38bdf8;   /* sky blue */
+      --radius:    18px;
+      --radius-sm: 12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated Background ─────────────────── */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+    .bg-glow::before {
+      content: '';
+      position: absolute; top: -20%; left: -10%;
+      width: 60vw; height: 60vw;
+      background: radial-gradient(circle, rgba(167,139,250,.07) 0%, transparent 70%);
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .bg-glow::after {
+      content: '';
+      position: absolute; bottom: -10%; right: -5%;
+      width: 50vw; height: 50vw;
+      background: radial-gradient(circle, rgba(56,189,248,.06) 0%, transparent 70%);
+      animation: drift 15s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes drift { to { transform: translate(5%, 5%); } }
+
+    /* ── Layout ──────────────────────────────── */
+    .container {
+      position: relative; z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    /* ── Hero ────────────────────────────────── */
+    .hero {
+      padding: 72px 0 56px;
+      text-align: center;
+    }
+
+    .flag-bar {
+      display: flex; justify-content: center; gap: 0;
+      width: 72px; height: 8px; border-radius: 4px;
+      margin: 0 auto 24px;
+      overflow: hidden;
+    }
+    .flag-bar span { flex: 1; }
+    .flag-bar span:nth-child(1) { background: var(--ku2); }
+    .flag-bar span:nth-child(2) { background: #fff; }
+    .flag-bar span:nth-child(3) { background: var(--ku3); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px;
+      background: rgba(167,139,250,.12);
+      border: 1px solid rgba(167,139,250,.25);
+      border-radius: 999px;
+      font-size: 12px; font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 20px;
+      letter-spacing: .04em;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+    .hero h1 {
+      font-size: clamp(28px, 6vw, 52px);
+      font-weight: 700;
+      letter-spacing: -.02em;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+    .hero h1 .gold { color: var(--ku); }
+    .hero h1 .dim  { color: var(--muted); font-weight: 400; }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 520px;
+      margin: 0 auto 32px;
+    }
+
+    .hero-actions {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px;
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; text-decoration: none;
+      transition: all .2s;
+      border: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      color: #000;
+    }
+    .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: #222; }
+
+    /* ── Stats Bar ───────────────────────────── */
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; margin: 48px 0;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      transition: border-color .2s;
+    }
+    .stat-card:hover { border-color: rgba(167,139,250,.35); }
+    .stat-card .num { font-size: 28px; font-weight: 700; color: var(--ku); display: block; }
+    .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Section Titles ──────────────────────── */
+    .section-title {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 16px;
+    }
+
+    /* ── Endpoint Cards ──────────────────────── */
+    .endpoints { display: flex; flex-direction: column; gap: 12px; margin-bottom: 48px; }
+
+    .ep-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color .2s, transform .2s;
+    }
+    .ep-card:hover { border-color: rgba(167,139,250,.3); transform: translateY(-1px); }
+
+    .ep-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px;
+      cursor: pointer; user-select: none;
+    }
+    .method {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 8px; border-radius: 6px;
+      background: rgba(45,138,78,.2); color: #4ade80;
+      font-family: monospace; flex-shrink: 0;
+    }
+    .ep-path {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 14px; color: var(--text); flex: 1;
+    }
+    .ep-desc { font-size: 13px; color: var(--muted); flex-shrink: 0; }
+    .ep-arrow { color: var(--muted); font-size: 12px; transition: transform .2s; flex-shrink: 0; }
+    .ep-card.open .ep-arrow { transform: rotate(90deg); }
+
+    .ep-body {
+      display: none; padding: 0 20px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .ep-card.open .ep-body { display: block; }
+
+    .params-title { font-size: 12px; color: var(--muted); margin: 16px 0 8px; font-weight: 500; }
+    .param-row {
+      display: flex; gap: 8px; align-items: baseline;
+      padding: 6px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .param-row:last-child { border-bottom: none; }
+    .param-name { font-family: monospace; color: var(--accent2); font-size: 12px; flex-shrink: 0; min-width: 90px; }
+    .param-type { color: var(--ku); font-size: 11px; font-family: monospace; flex-shrink: 0; }
+    .param-desc { color: var(--muted); }
+
+    .example-url {
+      margin-top: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-family: monospace; font-size: 12px;
+      color: var(--accent);
+      word-break: break-all;
+      display: flex; align-items: center; gap: 10px; justify-content: space-between;
+    }
+    .copy-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 13px;
+      padding: 2px 6px; border-radius: 6px;
+      transition: background .15s; flex-shrink: 0;
+    }
+    .copy-btn:hover { background: var(--surface); color: var(--text); }
+
+    .try-btn {
+      margin-top: 12px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      background: rgba(167,139,250,.12);
+      border: 1px solid rgba(167,139,250,.25);
+      color: var(--accent); font-size: 13px;
+      cursor: pointer; text-decoration: none;
+      transition: background .2s;
+    }
+    .try-btn:hover { background: rgba(167,139,250,.22); }
+
+    /* ── Response Preview ────────────────────── */
+    .response-preview {
+      margin-top: 12px;
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: monospace; font-size: 12px;
+      color: #a8e6cf; line-height: 1.7;
+      max-height: 200px; overflow-y: auto;
+      white-space: pre;
+    }
+
+    /* ── Live Demo ───────────────────────────── */
+    .demo-section { margin-bottom: 48px; }
+    .demo-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .demo-input-row {
+      display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .demo-input {
+      flex: 1; min-width: 180px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text); font-size: 14px; font-family: inherit;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .demo-input:focus { border-color: var(--accent); }
+    .demo-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text); font-size: 14px;
+      outline: none; cursor: pointer;
+    }
+    .demo-run {
+      padding: 10px 22px; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #000; font-weight: 600; font-size: 14px;
+      border: none; cursor: pointer;
+      transition: filter .2s, transform .2s;
+    }
+    .demo-run:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .demo-run:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .demo-output {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: monospace; font-size: 12px;
+      color: #e2e8f0; line-height: 1.7;
+      min-height: 60px; max-height: 340px;
+      overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+    }
+    .demo-loading { color: var(--muted); animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .demo-error { color: #f87171; }
+
+    /* ── Channels Table ──────────────────────── */
+    .channels-section { margin-bottom: 48px; }
+    .channel-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 10px;
+    }
+    .channel-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      transition: border-color .2s, background .2s;
+    }
+    .channel-chip:hover { border-color: rgba(232,200,74,.35); background: #131313; }
+    .ch-name { font-size: 14px; font-weight: 500; }
+    .ch-ku   { font-size: 13px; color: var(--ku); margin-top: 2px; }
+    .ch-meta { font-size: 11px; color: var(--muted); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .ch-tag {
+      padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 500;
+    }
+    .tag-news   { background: rgba(56,189,248,.15); color: var(--accent2); }
+    .tag-ent    { background: rgba(167,139,250,.15); color: var(--accent); }
+    .tag-sport  { background: rgba(74,222,128,.15);  color: #4ade80; }
+    .tag-rel    { background: rgba(251,191,36,.15);  color: #fbbf24; }
+    .tag-gen    { background: rgba(148,163,184,.1);  color: #94a3b8; }
+
+    /* ── Footer ──────────────────────────────── */
+    footer {
+      text-align: center; padding: 32px 0;
+      border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 13px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .heart { color: var(--ku); }
+
+    /* ── Highlight JSON ──────────────────────── */
+    .json-key   { color: #93c5fd; }
+    .json-str   { color: #86efac; }
+    .json-num   { color: var(--ku); }
+    .json-bool  { color: #f472b6; }
+    .json-null  { color: var(--muted); }
+
+    /* ── Responsive ──────────────────────────── */
+    @media (max-width: 600px) {
+      .stats-bar { grid-template-columns: repeat(3, 1fr); }
+      .stat-card .num { font-size: 22px; }
+      .ep-desc { display: none; }
+    }
+    @media (max-width: 420px) {
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="container">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="flag-bar"><span></span><span></span><span></span></div>
+    <div class="badge"><span class="badge-dot"></span>Free &amp; Open API</div>
+    <h1>
+      <span class="gold">Kurdish TV</span> <span class="dim">API</span><br/>
+      کەناڵە کوردی و عێراقییەکان
+    </h1>
+    <p>API ئازاد بۆ هەموو کەناڵە کوردی و عێراقییەکان — پشتگیری ئەنجامی JSON و M3U دەکات</p>
+    <div class="hero-actions">
+      <a href="#demo" class="btn btn-primary">▶ تاقیکردنەوە</a>
+      <a href="#endpoints" class="btn btn-ghost">📖 ئەندپۆینتەکان</a>
+      <a href="/api/kurdish" target="_blank" class="btn btn-ghost" style="color:var(--ku)">⭐ کەناڵە کوردییەکان</a>
+    </div>
+  </div>
+
+  <!-- ── Stats ── -->
+  <div class="stats-bar">
+    <div class="stat-card"><span class="num" id="stat-total">…</span><span class="label">کەناڵی کۆتایی</span></div>
+    <div class="stat-card"><span class="num" id="stat-kurdish" style="color:var(--ku)">…</span><span class="label">کەناڵی کوردی</span></div>
+    <div class="stat-card"><span class="num" id="stat-arabic" style="color:var(--accent2)">…</span><span class="label">کەناڵی عەرەبی</span></div>
+  </div>
+
+  <!-- ── Endpoints ── -->
+  <div id="endpoints">
+    <div class="section-title">ئەندپۆینتەکان — Endpoints</div>
+    <div class="endpoints">
+
+      <!-- /api/channels -->
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-header">
+          <span class="method">GET</span>
+          <span class="ep-path">/api/channels</span>
+          <span class="ep-desc">هەموو کەناڵەکان</span>
+          <span class="ep-arrow">▶</span>
+        </div>
+        <div class="ep-body">
+          <div class="params-title">پارامیتەرەکان — Query Parameters</div>
+          <div class="param-row"><span class="param-name">lang</span><span class="param-type">string</span><span class="param-desc">فلتەر بە زمان: <code>ku</code>, <code>ar</code>, <code>tr</code></span></div>
+          <div class="param-row"><span class="param-name">category</span><span class="param-type">string</span><span class="param-desc">فلتەر بە کاتیگۆری: <code>News</code>, <code>Entertainment</code>, <code>Sports</code>…</span></div>
+          <div class="param-row"><span class="param-name">q</span><span class="param-type">string</span><span class="param-desc">گەڕان بە ناو: <code>rudaw</code>, <code>ڕووداو</code></span></div>
+          <div class="param-row"><span class="param-name">source</span><span class="param-type">string</span><span class="param-desc">سەرچاوە: <code>all</code> (بنەڕەت), <code>iraq</code>, <code>kurdish</code></span></div>
+          <div class="param-row"><span class="param-name">page</span><span class="param-type">int</span><span class="param-desc">ژمارەی لاپەڕە (بنەڕەت: 1)</span></div>
+          <div class="param-row"><span class="param-name">limit</span><span class="param-type">int</span><span class="param-desc">ژمارەی کەناڵ لە هەر لاپەڕەیەک (بنەڕەت: 100، زیاترین: 500)</span></div>
+          <div class="example-url">
+            <span>/api/channels?lang=ku&amp;category=News</span>
+            <button class="copy-btn" onclick="copyText(event, '/api/channels?lang=ku&category=News')">📋</button>
+          </div>
+          <a href="/api/channels?lang=ku&category=News" target="_blank" class="try-btn">▶ تاقیبکەرەوە</a>
+        </div>
+      </div>
+
+      <!-- /api/kurdish -->
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-header">
+          <span class="method">GET</span>
+          <span class="ep-path">/api/kurdish</span>
+          <span class="ep-desc">تەنیا کوردی</span>
+          <span class="ep-arrow">▶</span>
+        </div>
+        <div class="ep-body">
+          <p style="color:var(--muted);font-size:13px;margin-bottom:12px">هەموو کەناڵە کوردییەکان لە عێراق، ئێران، تورکیا، سووریا و دیاسپۆرا</p>
+          <div class="param-row"><span class="param-name">category</span><span class="param-type">string</span><span class="param-desc">فلتەر بە کاتیگۆری</span></div>
+          <div class="param-row"><span class="param-name">q</span><span class="param-type">string</span><span class="param-desc">گەڕان بە ناو</span></div>
+          <div class="example-url">
+            <span>/api/kurdish</span>
+            <button class="copy-btn" onclick="copyText(event, '/api/kurdish')">📋</button>
+          </div>
+          <a href="/api/kurdish" target="_blank" class="try-btn">▶ تاقیبکەرەوە</a>
+        </div>
+      </div>
+
+      <!-- /api/iraq -->
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-header">
+          <span class="method">GET</span>
+          <span class="ep-path">/api/iraq</span>
+          <span class="ep-desc">کەناڵی عێراق</span>
+          <span class="ep-arrow">▶</span>
+        </div>
+        <div class="ep-body">
+          <p style="color:var(--muted);font-size:13px;margin-bottom:12px">هەموو کەناڵە عێراقییەکان — کوردی، عەرەبی، تورکمانی</p>
+          <div class="param-row"><span class="param-name">lang</span><span class="param-type">string</span><span class="param-desc">فلتەر بە زمان: <code>ku</code>, <code>ar</code></span></div>
+          <div class="param-row"><span class="param-name">category</span><span class="param-type">string</span><span class="param-desc">فلتەر بە کاتیگۆری</span></div>
+          <div class="example-url">
+            <span>/api/iraq?lang=ku</span>
+            <button class="copy-btn" onclick="copyText(event, '/api/iraq?lang=ku')">📋</button>
+          </div>
+          <a href="/api/iraq" target="_blank" class="try-btn">▶ تاقیبکەرەوە</a>
+        </div>
+      </div>
+
+      <!-- /api/search -->
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-header">
+          <span class="method">GET</span>
+          <span class="ep-path">/api/search</span>
+          <span class="ep-desc">گەڕان</span>
+          <span class="ep-arrow">▶</span>
+        </div>
+        <div class="ep-body">
+          <div class="param-row"><span class="param-name">q</span><span class="param-type">string ✱</span><span class="param-desc">ناوی کەناڵ (کوردی یان ئینگلیزی)</span></div>
+          <div class="example-url">
+            <span>/api/search?q=rudaw</span>
+            <button class="copy-btn" onclick="copyText(event, '/api/search?q=rudaw')">📋</button>
+          </div>
+          <a href="/api/search?q=rudaw" target="_blank" class="try-btn">▶ تاقیبکەرەوە</a>
+        </div>
+      </div>
+
+      <!-- /api/m3u -->
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-header">
+          <span class="method">GET</span>
+          <span class="ep-path">/api/m3u</span>
+          <span class="ep-desc">پلەیلیست M3U</span>
+          <span class="ep-arrow">▶</span>
+        </div>
+        <div class="ep-body">
+          <p style="color:var(--muted);font-size:13px;margin-bottom:12px">دابەزاندنی پلەیلیستی M3U بۆ VLC، Kodi، تریم…</p>
+          <div class="param-row"><span class="param-name">lang</span><span class="param-type">string</span><span class="param-desc"><code>ku</code> بۆ تەنیا کوردی، <code>ar</code> بۆ عەرەبی</span></div>
+          <div class="param-row"><span class="param-name">source</span><span class="param-type">string</span><span class="param-desc"><code>iraq</code>, <code>kurdish</code>, <code>all</code></span></div>
+          <div class="param-row"><span class="param-name">download</span><span class="param-type">boolean</span><span class="param-desc"><code>1</code> بۆ داونلۆد دایەلۆگ</span></div>
+          <div class="example-url">
+            <span>/api/m3u?lang=ku&amp;download=1</span>
+            <button class="copy-btn" onclick="copyText(event, '/api/m3u?lang=ku&download=1')">📋</button>
+          </div>
+          <a href="/api/m3u?lang=ku" target="_blank" class="try-btn">▶ کردنەوەی M3U</a>
+        </div>
+      </div>
+
+      <!-- /api/categories -->
+      <div class="ep-card" onclick="toggleCard(this)">
+        <div class="ep-header">
+          <span class="method">GET</span>
+          <span class="ep-path">/api/categories</span>
+          <span class="ep-desc">کاتیگۆریەکان</span>
+          <span class="ep-arrow">▶</span>
+        </div>
+        <div class="ep-body">
+          <p style="color:var(--muted);font-size:13px;margin-bottom:12px">لیستی هەموو کاتیگۆریەکانی بەردەست</p>
+          <div class="example-url">
+            <span>/api/categories</span>
+            <button class="copy-btn" onclick="copyText(event, '/api/categories')">📋</button>
+          </div>
+          <a href="/api/categories" target="_blank" class="try-btn">▶ تاقیبکەرەوە</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Response Schema ── -->
+  <div style="margin-bottom:48px">
+    <div class="section-title">نموونەی وەڵام — Response Schema</div>
+    <div class="response-preview">{
+  "success": true,
+  "total": 42,
+  "channels": [
+    {
+      "id":            "Rudaw.iq",
+      "name":          "Rudaw",
+      "nameKu":        "ڕووداو",
+      "nameAr":        "روداو",
+      "logo":          "https://…/rudaw.png",
+      "category":      "News",
+      "language":      "ku",
+      "country":       "iq",
+      "isKurdish":     true,
+      "website":       "https://rudaw.net",
+      "description":   "شبکه‌ی هەواڵەکانی ڕووداو لە هەولێر",
+      "url":           "https://…/stream.m3u8"
+    }
+  ]
+}</div>
+  </div>
+
+  <!-- ── Live Demo ── -->
+  <div class="demo-section" id="demo">
+    <div class="section-title">تاقیکردنەوەی ڕاستەوخۆ — Live Demo</div>
+    <div class="demo-box">
+      <div class="demo-input-row">
+        <select class="demo-select" id="demo-endpoint">
+          <option value="/api/kurdish">/api/kurdish</option>
+          <option value="/api/iraq">/api/iraq</option>
+          <option value="/api/channels?lang=ku&limit=20">/api/channels?lang=ku</option>
+          <option value="/api/channels?lang=ar&limit=20">/api/channels?lang=ar</option>
+          <option value="/api/channels?category=News">/api/channels?category=News</option>
+          <option value="/api/categories">/api/categories</option>
+        </select>
+        <input class="demo-input" id="demo-search" placeholder="گەڕان: rudaw, nrt, …" oninput="updateDemoUrl()" />
+        <button class="demo-run" id="demo-run-btn" onclick="runDemo()">▶ بێخەرەوە</button>
+      </div>
+      <div id="demo-url" style="font-family:monospace;font-size:12px;color:var(--muted);margin-bottom:10px">/api/kurdish</div>
+      <div class="demo-output" id="demo-output">← دوگمەکە داگرتە بۆ تاقیکردنەوە</div>
+    </div>
+  </div>
+
+  <!-- ── Kurdish Channels Showcase ── -->
+  <div class="channels-section">
+    <div class="section-title">کەناڵە کوردییە سەرەکییەکان — Featured Kurdish Channels</div>
+    <div class="channel-grid" id="channel-grid">
+      <!-- JS fills this -->
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <p>Kurdish TV API — ساخت بۆ کوردستان <span class="heart">♥</span></p>
+    <p style="margin-top:6px">سەرچاوە: <a href="https://github.com/iptv-org/iptv" target="_blank">iptv-org/iptv</a> • MIT License</p>
+  </footer>
+
+</div><!-- /container -->
+
+<script>
+  // ── Toggle endpoint cards ──
+  function toggleCard(el) { el.classList.toggle('open'); }
+
+  // ── Copy helper ──
+  function copyText(e, text) {
+    e.stopPropagation();
+    navigator.clipboard.writeText(location.origin + text).catch(() => {});
+    const btn = e.target;
+    btn.textContent = '✅'; setTimeout(() => btn.textContent = '📋', 1500);
+  }
+
+  // ── Demo ──
+  function updateDemoUrl() {
+    const ep  = document.getElementById('demo-endpoint').value;
+    const q   = document.getElementById('demo-search').value.trim();
+    const url = q ? (ep.includes('?') ? ep + '&q=' + encodeURIComponent(q) : ep + '?q=' + encodeURIComponent(q)) : ep;
+    document.getElementById('demo-url').textContent = url;
+    return url;
+  }
+  document.getElementById('demo-endpoint').addEventListener('change', updateDemoUrl);
+
+  async function runDemo() {
+    const url = updateDemoUrl();
+    const out = document.getElementById('demo-output');
+    const btn = document.getElementById('demo-run-btn');
+    out.innerHTML = '<span class="demo-loading">⏳ چاوەڕێبکە…</span>';
+    btn.disabled = true;
+    try {
+      const res  = await fetch(url);
+      const data = await res.json();
+      out.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      out.innerHTML = '<span class="demo-error">❌ هەڵە: ' + e.message + '</span>';
+    }
+    btn.disabled = false;
+  }
+
+  // ── Load stats + featured channels ──
+  const FEATURED = [
+    { name:'Rudaw',         nameKu:'ڕووداو',      cat:'News' },
+    { name:'Kurdistan 24',  nameKu:'کوردستان ٢٤', cat:'News' },
+    { name:'NRT',           nameKu:'NRT',          cat:'News' },
+    { name:'KurdSat',       nameKu:'کوردسات',      cat:'General' },
+    { name:'Waar TV',       nameKu:'وار',          cat:'News' },
+    { name:'Zagros TV',     nameKu:'زاگرۆس',      cat:'News' },
+    { name:'KNNC',          nameKu:'KNNC',         cat:'News' },
+    { name:'Kurdmax',       nameKu:'کوردمێکس',    cat:'Entertainment' },
+    { name:'Sterk TV',      nameKu:'ستێرک',        cat:'News' },
+    { name:'Ronahi TV',     nameKu:'ڕۆناهی',      cat:'News' },
+    { name:'Gulan TV',      nameKu:'گولان',        cat:'Entertainment' },
+    { name:'Speda TV',      nameKu:'سپێدە',        cat:'General' },
+    { name:'KMax TV',       nameKu:'KMax',         cat:'Entertainment' },
+    { name:'Payam TV',      nameKu:'پەیام',        cat:'Religious' },
+    { name:'Nalia TV',      nameKu:'نالیا',        cat:'News' },
+    { name:'Al Iraqiya',    nameKu:'',             cat:'General' },
+    { name:'Al Sharqiya',   nameKu:'',             cat:'News' },
+    { name:'Al Sumaria',    nameKu:'',             cat:'News' },
+    { name:'Dijlah TV',     nameKu:'',             cat:'News' },
+    { name:'Baghdad TV',    nameKu:'',             cat:'General' },
+    { name:'Al Rasheed',    nameKu:'',             cat:'General' },
+    { name:'Forat TV',      nameKu:'',             cat:'General' },
+    { name:'Turkmeneli TV', nameKu:'',             cat:'General' },
+    { name:'Zagros TV',     nameKu:'زاگرۆس',      cat:'News' },
+  ];
+
+  const TAG_CLASS = { News:'tag-news', Entertainment:'tag-ent', Sports:'tag-sport', Religious:'tag-rel', General:'tag-gen' };
+
+  function buildGrid() {
+    const grid = document.getElementById('channel-grid');
+    // deduplicate
+    const seen = new Set();
+    const unique = FEATURED.filter(c => { if(seen.has(c.name)) return false; seen.add(c.name); return true; });
+    grid.innerHTML = unique.map(c => `
+      <div class="channel-chip">
+        <div class="ch-name">${c.name}</div>
+        ${c.nameKu ? `<div class="ch-ku">${c.nameKu}</div>` : ''}
+        <div class="ch-meta">
+          <span class="ch-tag ${TAG_CLASS[c.cat]||'tag-gen'}">${c.cat}</span>
+          ${c.nameKu ? '<span class="ch-tag tag-gen">کوردی</span>' : '<span class="ch-tag tag-gen">عەرەبی</span>'}
+        </div>
+      </div>`).join('');
+  }
+
+  async function loadStats() {
+    try {
+      const res  = await fetch('/api/iraq');
+      const data = await res.json();
+      document.getElementById('stat-total').textContent   = data.total || '—';
+      document.getElementById('stat-kurdish').textContent = data.stats?.kurdish || '—';
+      document.getElementById('stat-arabic').textContent  = data.stats?.arabic  || '—';
+    } catch { /* leave dots */ }
+  }
+
+  buildGrid();
+  loadStats();
+</script>
+</body>
+</html>
